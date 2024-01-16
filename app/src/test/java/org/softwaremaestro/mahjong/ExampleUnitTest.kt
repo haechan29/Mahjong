@@ -29,6 +29,15 @@ class ExampleUnitTest {
         }
     }
 
+    @Test
+    fun matchCard() {
+        val cardMatcher = CardMatcher()
+        assertEquals(null, cardMatcher.put(0))
+        assertEquals(false, cardMatcher.put(1))
+        assertEquals(null, cardMatcher.put(1))
+        assertEquals(true, cardMatcher.put(1))
+    }
+
     private fun getLayout(number: Int): Array<Array<Int>> {
         val shuffledNumbers = mutableListOf<Int>().apply {
             repeat(2) {

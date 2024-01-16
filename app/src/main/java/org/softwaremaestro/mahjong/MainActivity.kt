@@ -58,6 +58,7 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun MahjongLayout(layout: Array<Array<Int>>) {
+    val cardMathcher = CardMatcher()
     Box(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center

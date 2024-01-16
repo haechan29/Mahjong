@@ -80,42 +80,41 @@ fun MahjongLayout(layout: Array<Array<Int>>) {
 @Composable
 fun RowScope.MahjongCard(idx: Int) {
     var rotated by remember { mutableStateOf(false) }
-    var isVisible by remember { mutableStateOf(true) }
+    var blurred by remember { mutableStateOf(false) }
     val mRotationY by animateFloatAsState(
         targetValue = if (rotated) 180f else 0f,
         animationSpec = tween(500)
     )
-    AnimatedVisibility(
-        visible = isVisible,
-        exit = fadeOut(
-            animationSpec = tween(500)
-        ),
+    val mAlpha by animateFloatAsState(
+        targetValue = if (blurred) 0.2f else 1f,
+        animationSpec = tween(500)
+    )
+    Card(
         modifier = Modifier
             .weight(1f)
             .aspectRatio(0.5f)
+            .background(color = Color.White)
+            .padding(20.dp)
+            .graphicsLayer {
+                rotationY = mRotationY
+                alpha = mAlpha
+            }
+            .clickable {
+                if (isCorrect()) {
+                    blurred = !blurred
+                } else {
+                    rotated = !rotated
+                }
+            },
+        shape = RoundedCornerShape(10.dp)
     ) {
-        Card(
-            modifier = Modifier
-                .background(color = Color.White)
-                .padding(20.dp)
-                .graphicsLayer { rotationY = mRotationY }
-                .clickable {
-                    if (isCorrect()) {
-                        isVisible = !isVisible
-                    } else {
-                        rotated = !rotated
-                    }
-                },
-            shape = RoundedCornerShape(10.dp)
-        ) {
-            Image(
-                modifier = Modifier.fillMaxSize(),
-                painter = painterResource(
-                    id = if (mRotationY <= 90) R.drawable.ic_launcher_background else drawables[idx]
-                ),
-                contentDescription = null
-            )
-        }
+        Image(
+            modifier = Modifier.fillMaxSize(),
+            painter = painterResource(
+                id = if (mRotationY <= 90) R.drawable.ic_launcher_background else drawables[idx]
+            ),
+            contentDescription = null
+        )
     }
 }
 

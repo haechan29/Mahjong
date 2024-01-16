@@ -101,7 +101,24 @@ fun RowScope.MahjongCard(idx: Int, cardMatcher: CardMatcher) {
             }
             .clickable {
                 if (!clickable) return@clickable
-
+                rotated = !rotated
+                if (cardMatcher.isEmpty()) {
+                    cardMatcher.put(idx)
+                } else {
+                    cardMatcher.put(idx)
+                    val matching = cardMatcher.isMatching()
+                    val cards = cardMatcher.clear()
+                    if (matching) {
+                        if (cards.contains(idx)) {
+                            blurred = !blurred
+                            clickable = !clickable
+                        }
+                    } else {
+                        if (cards.contains(idx)) {
+                            rotated = !rotated
+                        }
+                    }
+                }
             },
         shape = RoundedCornerShape(10.dp)
     ) {

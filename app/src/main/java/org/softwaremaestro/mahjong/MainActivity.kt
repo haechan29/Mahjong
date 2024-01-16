@@ -1,7 +1,7 @@
 package org.softwaremaestro.mahjong
 
+import android.media.SoundPool
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.core.animateFloatAsState
@@ -20,10 +20,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CardElevation
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
@@ -43,6 +43,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.softwaremaestro.mahjong.Util.cardMatcher
 import org.softwaremaestro.mahjong.Util.drawables
+import org.softwaremaestro.mahjong.Util.sound
 import org.softwaremaestro.mahjong.ui.theme.MahjongTheme
 
 class MainActivity : ComponentActivity() {
@@ -60,6 +61,17 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        sound.init()
+        sound.load(this)
+    }
+
+    override fun onStop() {
+        super.onStop()
+        sound.release()
     }
 }
 
@@ -119,7 +131,11 @@ fun RowScope.MahjongCard(
                 alpha = mAlpha
             }
             .clickable {
-                handleClick(card, mahjongCardStates, coroutineScope)
+                handleClick(
+                    card,
+                    mahjongCardStates,
+                    coroutineScope
+                )
             },
         colors = CardDefaults.cardColors(
             containerColor = if (mRotationY <= 90) Color.White else Color(0xFF51A1C4)
@@ -127,16 +143,39 @@ fun RowScope.MahjongCard(
         shape = RoundedCornerShape(10.dp),
         elevation = CardDefaults.cardElevation(10.dp)
     ) {
-        Image(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(top = 20.dp, bottom = 20.dp, start = 10.dp, end = 10.dp)
-                .background(color = Color.Transparent),
-            painter = painterResource(
-                id = if (mRotationY <= 90) R.drawable.logo else drawables[number]
-            ),
-            contentDescription = null
-        )
+        Box() {
+            Box(
+                modifier = Modifier
+                    .padding(top = 10.dp, bottom = 10.dp, start = 5.dp, end = 5.dp)
+                    .fillMaxSize()
+                    .background(color = Color.White, shape = CircleShape)
+            ) {
+                Image(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(top = 20.dp, bottom = 20.dp, start = 10.dp, end = 10.dp)
+                        .background(color = Color.Transparent),
+                    painter = painterResource(
+                        id = if (mRotationY <= 90) R.drawable.logo else drawables[number]
+                    ),
+                    contentDescription = null
+                )
+            }
+            if (mRotationY > 90) {
+                Box(
+                    modifier = Modifier
+                        .padding(top = 5.dp)
+                        .align(Alignment.TopCenter)
+                        .width(10.dp)
+                        .height(10.dp)
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.bell),
+                        contentDescription = null
+                    )
+                }
+            }
+        }
     }
 }
 
@@ -147,6 +186,7 @@ data class MahjongCardState(
 ) {
     fun flip() {
         rotatedState.value = !rotatedState.value
+        sound.play()
     }
 
     fun clear() {
@@ -176,7 +216,7 @@ private fun getLayout(number: Int): Array<Array<Int>> {
     }
 }
 
-fun handleClick(
+private fun handleClick(
     card: Card,
     mahjongCardStates: Array<MahjongCardState>,
     coroutineScope: CoroutineScope
@@ -206,6 +246,8 @@ fun handleClick(
 object Util {
     val cardMatcher = CardMatcher()
 
+    val sound = Sound()
+
     val drawables = listOf(
         R.drawable.doraemon1,
         R.drawable.doraemon2,
@@ -221,5 +263,4 @@ object Util {
         R.drawable.doraemon12,
         R.drawable.doraemon13
     ).shuffled()
-
 }

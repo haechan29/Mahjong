@@ -19,8 +19,8 @@ class CardMatcher {
         return newCards
     }
 
-    fun isEmpty(): Boolean {
-        return cards.isEmpty()
+    fun isFull(): Boolean {
+        return cards.size == 2
     }
 }
 

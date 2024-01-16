@@ -1,7 +1,6 @@
 package org.softwaremaestro.mahjong
 
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.core.animateFloatAsState
@@ -25,8 +24,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -34,7 +31,8 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import org.softwaremaestro.mahjong.Drawables.drawables
+import org.softwaremaestro.mahjong.Util.cardMatcher
+import org.softwaremaestro.mahjong.Util.drawables
 import org.softwaremaestro.mahjong.ui.theme.MahjongTheme
 
 class MainActivity : ComponentActivity() {
@@ -57,7 +55,6 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun MahjongLayout(layout: Array<Array<Int>>) {
-    val cardMatcher = CardMatcher()
     val mahjongCardStates = Array(layout.size * layout[0].size) { MahjongCardState() }
     Box(
         modifier = Modifier.fillMaxSize(),
@@ -65,15 +62,10 @@ fun MahjongLayout(layout: Array<Array<Int>>) {
     ) {
         Column() {
             layout.indices.forEach { i ->
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                ) {
+                Row(modifier = Modifier.fillMaxWidth()) {
                     layout[i].indices.forEach { j ->
                         MahjongCard(
-                            i * layout[0].size + j,
-                            layout[i][j],
-                            cardMatcher,
+                            Card(i * layout[0].size + j, layout[i][j]),
                             mahjongCardStates
                         )
                     }
@@ -85,15 +77,11 @@ fun MahjongLayout(layout: Array<Array<Int>>) {
 
 @Composable
 fun RowScope.MahjongCard(
-    idx: Int,
-    number: Int,
-    cardMatcher: CardMatcher,
+    card: Card,
     mahjongCardStates: Array<MahjongCardState>
 ) {
-    val mahjongCardState = mahjongCardStates[idx]
-    val rotatedState = remember { mahjongCardState.rotatedState }
-    val blurredState = remember { mahjongCardState.blurredState }
-    val clickableState = remember { mahjongCardState.clickableState }
+    val (idx, number) = card
+    val (rotatedState, blurredState, clickableState) = mahjongCardStates[idx]
     val mRotationY by animateFloatAsState(
         targetValue = if (rotatedState.value) 180f else 0f,
         animationSpec = tween(500)
@@ -113,27 +101,7 @@ fun RowScope.MahjongCard(
                 alpha = mAlpha
             }
             .clickable {
-                if (!clickableState.value) return@clickable
-                mahjongCardStates[idx].rotatedState.value = !mahjongCardStates[idx].rotatedState.value
-                if (cardMatcher.isEmpty()) {
-                    cardMatcher.put(Card(idx, number))
-                } else {
-                    cardMatcher.put(Card(idx, number))
-                    val matching = cardMatcher.isMatching()
-                    val cards = cardMatcher.clear()
-                    cards.map {
-                        it.idx
-                    }.map {
-                        mahjongCardStates[it]
-                    }.forEach {
-                        if (matching) {
-                            it.blurredState.value = !it.blurredState.value
-                            it.clickableState.value = !it.clickableState.value
-                        } else {
-                            it.rotatedState.value = !it.rotatedState.value
-                        }
-                    }
-                }
+                handleClick(card, mahjongCardStates)
             },
         shape = RoundedCornerShape(10.dp)
     ) {
@@ -151,7 +119,16 @@ data class MahjongCardState(
     var rotatedState: MutableState<Boolean> = mutableStateOf(false),
     var blurredState: MutableState<Boolean> = mutableStateOf(false),
     var clickableState: MutableState<Boolean> = mutableStateOf(true),
-)
+) {
+    fun flip() {
+        rotatedState.value = !rotatedState.value
+    }
+
+    fun clear() {
+        blurredState.value = !blurredState.value
+        clickableState.value = !clickableState.value
+    }
+}
 
 @Preview(showBackground = true)
 @Composable
@@ -172,7 +149,32 @@ private fun getLayout(number: Int): Array<Array<Int>> {
     }
 }
 
-object Drawables {
+fun handleClick(
+    card: Card,
+    mahjongCardStates: Array<MahjongCardState>
+) {
+    val (idx, num) = card
+    val (rotatedState, blurredState, clickableState) = mahjongCardStates[idx]
+    if (!clickableState.value) return
+    mahjongCardStates[idx].flip()
+    cardMatcher.put(card)
+    if (cardMatcher.isFull()) {
+        val matching = cardMatcher.isMatching()
+        val cards = cardMatcher.clear()
+        val states = cards.map { mahjongCardStates[it.idx] }
+        states.forEach {
+            if (matching) {
+                it.clear()
+            } else {
+                it.flip()
+            }
+        }
+    }
+}
+
+object Util {
+    val cardMatcher = CardMatcher()
+
     val drawables = listOf(
         R.drawable.dora1,
         R.drawable.dora2,

@@ -8,7 +8,7 @@ class CardMatcher {
     }
 
     fun isMatching(): Boolean {
-        return cards[0].number == cards[1].number
+        return cards[0].number == cards[1].number && cards[0].idx != cards[1].idx
     }
 
     fun clear(): List<Card> {

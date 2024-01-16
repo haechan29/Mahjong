@@ -1,6 +1,7 @@
 package org.softwaremaestro.mahjong
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.core.animateFloatAsState
@@ -68,6 +69,7 @@ fun MahjongLayout(layout: Array<Array<Int>>) {
     Box(
         modifier = Modifier
             .fillMaxSize()
+            .background(color = Color(0xFFE8EAEA))
             .padding(10.dp),
         contentAlignment = Alignment.Center
     ) {
@@ -111,8 +113,7 @@ fun RowScope.MahjongCard(
     Card(
         modifier = Modifier
             .weight(1f)
-            .aspectRatio(0.5f)
-            .background(color = Color.White)
+            .aspectRatio(0.6f)
             .graphicsLayer {
                 rotationY = mRotationY
                 alpha = mAlpha
@@ -120,13 +121,16 @@ fun RowScope.MahjongCard(
             .clickable {
                 handleClick(card, mahjongCardStates, coroutineScope)
             },
+        colors = CardDefaults.cardColors(
+            containerColor = if (mRotationY <= 90) Color.White else Color(0xFF51A1C4)
+        ),
         shape = RoundedCornerShape(10.dp),
         elevation = CardDefaults.cardElevation(10.dp)
     ) {
         Image(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(top = 30.dp, bottom = 30.dp, start = 10.dp, end = 10.dp)
+                .padding(top = 20.dp, bottom = 20.dp, start = 10.dp, end = 10.dp)
                 .background(color = Color.Transparent),
             painter = painterResource(
                 id = if (mRotationY <= 90) R.drawable.logo else drawables[number]
@@ -183,12 +187,12 @@ fun handleClick(
     mahjongCardStates[idx].flip()
     cardMatcher.put(card)
     if (cardMatcher.isFull()) {
-        coroutineScope.launch {
-            delay(500L)
-            val matching = cardMatcher.isMatching()
-            val cards = cardMatcher.clear()
-            val states = cards.map { mahjongCardStates[it.idx] }
-            states.forEach {
+        val matching = cardMatcher.isMatching()
+        val cards = cardMatcher.clear()
+        val states = cards.map { mahjongCardStates[it.idx] }
+        states.forEach {
+            coroutineScope.launch {
+                delay(500L)
                 if (matching) {
                     it.clear()
                 } else {

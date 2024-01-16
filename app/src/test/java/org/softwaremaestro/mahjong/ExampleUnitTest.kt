@@ -31,24 +31,24 @@ class ExampleUnitTest {
 
     @Test
     fun whenPutNothingCardMatcherIsEmpty() {
-        val cardMatcher = CardMatcher()
-        assertTrue(cardMatcher.isEmpty())
+        val numberMatcher = NumberMatcher()
+        assertTrue(numberMatcher.isEmpty())
     }
 
     @Test
     fun checkIsMatchingFunction() {
-        val cardMatcher = CardMatcher()
-        cardMatcher.apply {
+        val numberMatcher = NumberMatcher()
+        numberMatcher.apply {
             put(1)
             put(1)
         }
-        assertTrue(cardMatcher.isMatching())
-        cardMatcher.clear()
-        cardMatcher.apply {
+        assertTrue(numberMatcher.isMatching())
+        numberMatcher.clear()
+        numberMatcher.apply {
             put(1)
             put(2)
         }
-        assertFalse(cardMatcher.isMatching())
+        assertFalse(numberMatcher.isMatching())
     }
 
     private fun getLayout(number: Int): Array<Array<Int>> {

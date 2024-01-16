@@ -1,12 +1,11 @@
 package org.softwaremaestro.mahjong
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -22,7 +21,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -58,7 +56,7 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun MahjongLayout(layout: Array<Array<Int>>) {
-    val cardMathcher = CardMatcher()
+    val cardMatcher = CardMatcher()
     Box(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
@@ -70,7 +68,7 @@ fun MahjongLayout(layout: Array<Array<Int>>) {
                         .fillMaxWidth()
                 ) {
                     layout[i].indices.forEach { j ->
-                        MahjongCard(j)
+                        MahjongCard(j, cardMatcher)
                     }
                 }
             }
@@ -79,9 +77,10 @@ fun MahjongLayout(layout: Array<Array<Int>>) {
 }
 
 @Composable
-fun RowScope.MahjongCard(idx: Int) {
+fun RowScope.MahjongCard(idx: Int, cardMatcher: CardMatcher) {
     var rotated by remember { mutableStateOf(false) }
     var blurred by remember { mutableStateOf(false) }
+    var clickable by remember { mutableStateOf(true) }
     val mRotationY by animateFloatAsState(
         targetValue = if (rotated) 180f else 0f,
         animationSpec = tween(500)
@@ -101,10 +100,17 @@ fun RowScope.MahjongCard(idx: Int) {
                 alpha = mAlpha
             }
             .clickable {
-                if (isCorrect()) {
-                    blurred = !blurred
-                } else {
+                if (!clickable) return@clickable
+                val matching = cardMatcher.put(idx)
+                if (matching == null) {
                     rotated = !rotated
+                } else {
+                    if (matching) {
+                        blurred = !blurred
+                        clickable = false
+                    } else {
+                        rotated = !rotated
+                    }
                 }
             },
         shape = RoundedCornerShape(10.dp)
@@ -136,10 +142,6 @@ private fun getLayout(number: Int): Array<Array<Int>> {
     return Array(number / 4) {
         shuffledNumbers.slice(it * 4 until (it + 1) * 4).toTypedArray()
     }
-}
-
-fun isCorrect(): Boolean {
-    return listOf(true, false).random()
 }
 
 object Drawables {

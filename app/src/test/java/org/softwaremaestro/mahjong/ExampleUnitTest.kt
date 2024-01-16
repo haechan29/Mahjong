@@ -30,12 +30,25 @@ class ExampleUnitTest {
     }
 
     @Test
-    fun matchCard() {
+    fun whenPutNothingCardMatcherIsEmpty() {
         val cardMatcher = CardMatcher()
-        assertEquals(null, cardMatcher.put(0))
-        assertEquals(false, cardMatcher.put(1))
-        assertEquals(null, cardMatcher.put(1))
-        assertEquals(true, cardMatcher.put(1))
+        assertTrue(cardMatcher.isEmpty())
+    }
+
+    @Test
+    fun checkIsMatchingFunction() {
+        val cardMatcher = CardMatcher()
+        cardMatcher.apply {
+            put(1)
+            put(1)
+        }
+        assertTrue(cardMatcher.isMatching())
+        cardMatcher.clear()
+        cardMatcher.apply {
+            put(1)
+            put(2)
+        }
+        assertFalse(cardMatcher.isMatching())
     }
 
     private fun getLayout(number: Int): Array<Array<Int>> {

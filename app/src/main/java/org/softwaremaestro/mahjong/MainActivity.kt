@@ -101,17 +101,7 @@ fun RowScope.MahjongCard(idx: Int, cardMatcher: CardMatcher) {
             }
             .clickable {
                 if (!clickable) return@clickable
-                val matching = cardMatcher.put(idx)
-                if (matching == null) {
-                    rotated = !rotated
-                } else {
-                    if (matching) {
-                        blurred = !blurred
-                        clickable = false
-                    } else {
-                        rotated = !rotated
-                    }
-                }
+
             },
         shape = RoundedCornerShape(10.dp)
     ) {

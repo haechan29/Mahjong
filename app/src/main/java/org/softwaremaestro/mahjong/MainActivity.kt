@@ -55,7 +55,7 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun MahjongLayout(layout: Array<Array<Int>>) {
-    val numberMatcher = NumberMatcher()
+    val cardMatcher = CardMatcher()
     val mahjongCardStates = Array(layout.size * layout[0].size) { MahjongCardState() }
     Box(
         modifier = Modifier.fillMaxSize(),
@@ -71,7 +71,7 @@ fun MahjongLayout(layout: Array<Array<Int>>) {
                         MahjongCard(
                             i * layout.size + j,
                             layout[i][j],
-                            numberMatcher,
+                            cardMatcher,
                             mahjongCardStates
                         )
                     }
@@ -85,7 +85,7 @@ fun MahjongLayout(layout: Array<Array<Int>>) {
 fun RowScope.MahjongCard(
     idx: Int,
     number: Int,
-    numberMatcher: NumberMatcher,
+    cardMatcher: CardMatcher,
     mahjongCardStates: Array<MahjongCardState>
 ) {
     val mahjongCardState = mahjongCardStates[idx]
@@ -113,23 +113,23 @@ fun RowScope.MahjongCard(
             .clickable {
                 if (!clickable) return@clickable
                 rotated = !rotated
-                if (numberMatcher.isEmpty()) {
-                    numberMatcher.put(idx)
-                } else {
-                    numberMatcher.put(idx)
-                    val matching = numberMatcher.isMatching()
-                    val cards = numberMatcher.clear()
-                    if (matching) {
-                        if (cards.contains(idx)) {
-                            blurred = !blurred
-                            clickable = !clickable
-                        }
-                    } else {
-                        if (cards.contains(idx)) {
-                            rotated = !rotated
-                        }
-                    }
-                }
+//                if (cardMatcher.isEmpty()) {
+//                    cardMatcher.put(idx)
+//                } else {
+//                    cardMatcher.put(idx)
+//                    val matching = cardMatcher.isMatching()
+//                    val cards = cardMatcher.clear()
+//                    if (matching) {
+//                        if (cards.contains(idx)) {
+//                            blurred = !blurred
+//                            clickable = !clickable
+//                        }
+//                    } else {
+//                        if (cards.contains(idx)) {
+//                            rotated = !rotated
+//                        }
+//                    }
+//                }
             },
         shape = RoundedCornerShape(10.dp)
     ) {

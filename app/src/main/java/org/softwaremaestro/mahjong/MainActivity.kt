@@ -1,6 +1,7 @@
 package org.softwaremaestro.mahjong
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.core.animateFloatAsState
@@ -21,6 +22,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -69,7 +71,7 @@ fun MahjongLayout(layout: Array<Array<Int>>) {
                 ) {
                     layout[i].indices.forEach { j ->
                         MahjongCard(
-                            i * layout.size + j,
+                            i * layout[0].size + j,
                             layout[i][j],
                             cardMatcher,
                             mahjongCardStates
@@ -89,15 +91,15 @@ fun RowScope.MahjongCard(
     mahjongCardStates: Array<MahjongCardState>
 ) {
     val mahjongCardState = mahjongCardStates[idx]
-    var rotated by remember { mutableStateOf(mahjongCardState.rotated) }
-    var blurred by remember { mutableStateOf(mahjongCardState.blurred) }
-    var clickable by remember { mutableStateOf(mahjongCardState.clickable) }
+    val rotatedState = remember { mahjongCardState.rotatedState }
+    val blurredState = remember { mahjongCardState.blurredState }
+    val clickableState = remember { mahjongCardState.clickableState }
     val mRotationY by animateFloatAsState(
-        targetValue = if (rotated) 180f else 0f,
+        targetValue = if (rotatedState.value) 180f else 0f,
         animationSpec = tween(500)
     )
     val mAlpha by animateFloatAsState(
-        targetValue = if (blurred) 0.2f else 1f,
+        targetValue = if (blurredState.value) 0.2f else 1f,
         animationSpec = tween(500)
     )
     Card(
@@ -111,32 +113,34 @@ fun RowScope.MahjongCard(
                 alpha = mAlpha
             }
             .clickable {
-                if (!clickable) return@clickable
-                rotated = !rotated
-//                if (cardMatcher.isEmpty()) {
-//                    cardMatcher.put(idx)
-//                } else {
-//                    cardMatcher.put(idx)
-//                    val matching = cardMatcher.isMatching()
-//                    val cards = cardMatcher.clear()
-//                    if (matching) {
-//                        if (cards.contains(idx)) {
-//                            blurred = !blurred
-//                            clickable = !clickable
-//                        }
-//                    } else {
-//                        if (cards.contains(idx)) {
-//                            rotated = !rotated
-//                        }
-//                    }
-//                }
+                if (!clickableState.value) return@clickable
+                mahjongCardStates[idx].rotatedState.value = !mahjongCardStates[idx].rotatedState.value
+                if (cardMatcher.isEmpty()) {
+                    cardMatcher.put(Card(idx, number))
+                } else {
+                    cardMatcher.put(Card(idx, number))
+                    val matching = cardMatcher.isMatching()
+                    val cards = cardMatcher.clear()
+                    cards.map {
+                        it.idx
+                    }.map {
+                        mahjongCardStates[it]
+                    }.forEach {
+                        if (matching) {
+                            it.blurredState.value = !it.blurredState.value
+                            it.clickableState.value = !it.clickableState.value
+                        } else {
+                            it.rotatedState.value = !it.rotatedState.value
+                        }
+                    }
+                }
             },
         shape = RoundedCornerShape(10.dp)
     ) {
         Image(
             modifier = Modifier.fillMaxSize(),
             painter = painterResource(
-                id = if (mRotationY <= 90) R.drawable.ic_launcher_background else drawables[idx]
+                id = if (mRotationY <= 90) R.drawable.ic_launcher_background else drawables[number]
             ),
             contentDescription = null
         )
@@ -144,9 +148,9 @@ fun RowScope.MahjongCard(
 }
 
 data class MahjongCardState(
-    var rotated: Boolean = false,
-    var blurred: Boolean = false,
-    var clickable: Boolean = true
+    var rotatedState: MutableState<Boolean> = mutableStateOf(false),
+    var blurredState: MutableState<Boolean> = mutableStateOf(false),
+    var clickableState: MutableState<Boolean> = mutableStateOf(true),
 )
 
 @Preview(showBackground = true)

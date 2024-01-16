@@ -1,6 +1,5 @@
 package org.softwaremaestro.mahjong
 
-import android.media.SoundPool
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -30,6 +29,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -49,7 +49,6 @@ import org.softwaremaestro.mahjong.ui.theme.MahjongTheme
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val layout = getLayout(8)
         setContent {
             MahjongTheme {
                 // A surface container using the 'background' color from the theme
@@ -57,7 +56,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    MahjongLayout(layout)
+                    MahjongLayout()
                 }
             }
         }
@@ -76,7 +75,9 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun MahjongLayout(layout: Array<Array<Int>>) {
+fun MahjongLayout() {
+    val layoutState = remember { mutableStateOf(getLayout(8)) }
+    val layout = layoutState.value
     val mahjongCardStates = Array(layout.size * layout[0].size) { MahjongCardState() }
     Box(
         modifier = Modifier
@@ -91,7 +92,8 @@ fun MahjongLayout(layout: Array<Array<Int>>) {
                     layout[i].indices.forEach { j ->
                         MahjongCard(
                             Card(i * layout[0].size + j, layout[i][j]),
-                            mahjongCardStates
+                            mahjongCardStates,
+                            layoutState
                         )
                         if (j != layout[i].indices.last) {
                             Spacer(modifier = Modifier.width(10.dp))
@@ -109,7 +111,8 @@ fun MahjongLayout(layout: Array<Array<Int>>) {
 @Composable
 fun RowScope.MahjongCard(
     card: Card,
-    mahjongCardStates: Array<MahjongCardState>
+    mahjongCardStates: Array<MahjongCardState>,
+    layoutState: MutableState<Array<Array<Int>>>
 ) {
     val coroutineScope = rememberCoroutineScope()
     val (idx, number) = card
@@ -134,7 +137,8 @@ fun RowScope.MahjongCard(
                 handleClick(
                     card,
                     mahjongCardStates,
-                    coroutineScope
+                    coroutineScope,
+                    layoutState
                 )
             },
         colors = CardDefaults.cardColors(
@@ -182,7 +186,7 @@ fun RowScope.MahjongCard(
 data class MahjongCardState(
     var rotatedState: MutableState<Boolean> = mutableStateOf(false),
     var blurredState: MutableState<Boolean> = mutableStateOf(false),
-    var clickableState: MutableState<Boolean> = mutableStateOf(true),
+    var clickableState: MutableState<Boolean> = mutableStateOf(true)
 ) {
     fun flip() {
         rotatedState.value = !rotatedState.value
@@ -199,7 +203,7 @@ data class MahjongCardState(
 @Composable
 fun MahjongLayoutPreview() {
     MahjongTheme {
-        MahjongLayout(getLayout(8))
+        MahjongLayout()
     }
 }
 
@@ -219,7 +223,8 @@ private fun getLayout(number: Int): Array<Array<Int>> {
 private fun handleClick(
     card: Card,
     mahjongCardStates: Array<MahjongCardState>,
-    coroutineScope: CoroutineScope
+    coroutineScope: CoroutineScope,
+    layoutState: MutableState<Array<Array<Int>>>
 ) {
     val (idx, num) = card
     val (rotatedState, blurredState, clickableState) = mahjongCardStates[idx]
@@ -238,9 +243,24 @@ private fun handleClick(
                 } else {
                     it.flip()
                 }
+
+                if (isAllNotClickable(mahjongCardStates)) {
+                    delay(500L)
+                    mahjongCardStates.forEach {
+                        delay(50L)
+                        it.flip()
+                    }
+                    delay(500L)
+                    drawables = drawables.shuffled()
+                    layoutState.value = getLayout(12)
+                }
             }
         }
     }
+}
+
+fun isAllNotClickable(mahjongCardStates: Array<MahjongCardState>): Boolean {
+    return !mahjongCardStates.map { it.clickableState.value }.fold(false) { total, clickable -> total || clickable }
 }
 
 object Util {
@@ -248,11 +268,10 @@ object Util {
 
     val sound = Sound()
 
-    val drawables = listOf(
+    var drawables = listOf(
         R.drawable.doraemon1,
         R.drawable.doraemon2,
         R.drawable.doraemon3,
-        R.drawable.doraemon4,
         R.drawable.doraemon5,
         R.drawable.doraemon6,
         R.drawable.doraemon7,
@@ -260,7 +279,6 @@ object Util {
         R.drawable.doraemon9,
         R.drawable.doraemon10,
         R.drawable.doraemon11,
-        R.drawable.doraemon12,
         R.drawable.doraemon13
     ).shuffled()
 }

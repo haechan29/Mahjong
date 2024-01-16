@@ -1,24 +1,22 @@
 package org.softwaremaestro.mahjong
 
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
@@ -34,15 +32,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import org.softwaremaestro.mahjong.Drawables.drawables
 import org.softwaremaestro.mahjong.ui.theme.MahjongTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val layout = getLayout(8)
         setContent {
             MahjongTheme {
                 // A surface container using the 'background' color from the theme
@@ -50,10 +49,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    MahjongCard(
-                        R.drawable.ic_launcher_foreground,
-                        R.drawable.ic_launcher_background
-                    )
+                    MahjongLayout(layout)
                 }
             }
         }
@@ -61,7 +57,28 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun MahjongCard(frontResId: Int, backResId: Int) {
+fun MahjongLayout(layout: Array<Array<Int>>) {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Column() {
+            layout.indices.forEach { i ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                ) {
+                    layout[i].indices.forEach { j ->
+                        MahjongCard(j)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun RowScope.MahjongCard(idx: Int) {
     var rotated by remember { mutableStateOf(false) }
     var isVisible by remember { mutableStateOf(true) }
     val mRotationY by animateFloatAsState(
@@ -72,11 +89,13 @@ fun MahjongCard(frontResId: Int, backResId: Int) {
         visible = isVisible,
         exit = fadeOut(
             animationSpec = tween(500)
-        )
+        ),
+        modifier = Modifier
+            .weight(1f)
+            .aspectRatio(0.5f)
     ) {
         Card(
             modifier = Modifier
-                .fillMaxSize()
                 .background(color = Color.White)
                 .padding(20.dp)
                 .graphicsLayer { rotationY = mRotationY }
@@ -92,7 +111,7 @@ fun MahjongCard(frontResId: Int, backResId: Int) {
             Image(
                 modifier = Modifier.fillMaxSize(),
                 painter = painterResource(
-                    id = if (mRotationY <= 90) frontResId else backResId
+                    id = if (mRotationY <= 90) R.drawable.ic_launcher_background else drawables[idx]
                 ),
                 contentDescription = null
             )
@@ -102,15 +121,35 @@ fun MahjongCard(frontResId: Int, backResId: Int) {
 
 @Preview(showBackground = true)
 @Composable
-fun MahjongCardw() {
+fun MahjongLayoutPreview() {
     MahjongTheme {
-        MahjongCard(
-            R.drawable.ic_launcher_foreground,
-            R.drawable.ic_launcher_background
-        )
+        MahjongLayout(getLayout(8))
+    }
+}
+
+private fun getLayout(number: Int): Array<Array<Int>> {
+    val shuffledNumbers = mutableListOf<Int>().apply {
+        repeat(2) {
+            for (i in 1..number / 2) add(i)
+        }
+    }.shuffled()
+    return Array(number / 4) {
+        shuffledNumbers.slice(it * 4 until (it + 1) * 4).toTypedArray()
     }
 }
 
 fun isCorrect(): Boolean {
     return listOf(true, false).random()
+}
+
+object Drawables {
+    val drawables = listOf(
+        R.drawable.dora1,
+        R.drawable.dora2,
+        R.drawable.dora3,
+        R.drawable.jingu,
+        R.drawable.eseul,
+        R.drawable.tungtung,
+        R.drawable.bisil
+    )
 }
